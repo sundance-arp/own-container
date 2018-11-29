@@ -12,6 +12,7 @@
 
 #include "mount-host.h"
 #include "unshare-namespace.h"
+#include "utils.h"
 
 
 int wait_container_process(int pid){
@@ -19,44 +20,6 @@ int wait_container_process(int pid){
   waitpid(pid,&status,WUNTRACED);
   rmdir("/sys/fs/cgroup/pids/alpine-test");
   return status;
-}
-int mkdir_p(const char *path,mode_t mode)
-{
-  /* Adapted from http://stackoverflow.com/a/2336245/119527 */
-  const size_t len = strlen(path);
-  char _path[PATH_MAX];
-  char *p;
-
-  errno = 0;
-
-  /* Copy string so its mutable */
-  if (len > sizeof(_path)-1) {
-    errno = ENAMETOOLONG;
-    return -1;
-  }
-  strcpy(_path, path);
-
-  /* Iterate the string */
-  for (p = _path + 1; *p; p++) {
-    if (*p == '/') {
-      /* Temporarily truncate */
-      *p = '\0';
-
-      if (mkdir(_path, mode) != 0) {
-        if (errno != EEXIST)
-          return -1;
-      }
-
-      *p = '/';
-    }
-  }
-
-  if (mkdir(_path, mode) != 0) {
-    if (errno != EEXIST)
-      return -1;
-  }
-
-  return 0;
 }
 
 int main(int argc, char *argv[])
@@ -98,26 +61,7 @@ int main(int argc, char *argv[])
       break;
   }
 
-  // cgdirの存在確認
-  struct stat st;
-  // cgroupのディレクトリがあるかどうか
-  stat("/sys/fs/cgroup", &st);
-  if((st.st_mode  & S_IFMT) == S_IFDIR){
-    // あればなにもしない
-  }else {
-    // なければ作る
-    rc = mkdir_p("/sys/fs/cgroup",0755);
-    if(rc < 0){
-      printf("cgroup dir create Error: %d\n", rc);
-      return(rc);
-    }
-    // なければマウント
-    rc = mount("cgroup","/sys/fs/cgroup", "cgroup", 0, 0);
-    if(rc < 0){
-      printf("cgroup mount Error: %d\n", rc);
-      return(rc);
-    }
-  }
+  mount_cgroup_fs();
 
   // コンテナ用のcgroupディレクトリ作成
   mkdir("/sys/fs/cgroup/pids/alpine-test",0755);
