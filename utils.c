@@ -6,8 +6,7 @@
 #include <limits.h>
 #include <errno.h>
 
-int mkdir_p(const char *path,mode_t mode)
-{
+int mkdir_p(const char *path,mode_t mode){
   /* Adapted from http://stackoverflow.com/a/2336245/119527 */
   const size_t len = strlen(path);
   char _path[PATH_MAX];
