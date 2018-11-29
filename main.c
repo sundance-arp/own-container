@@ -10,8 +10,16 @@
 #include <string.h>
 #include <limits.h>
 
+#include "mount-host.h"
+#include "unshare-namespace.h"
 
 
+int wait_container_process(int pid){
+  int status;
+  waitpid(pid,&status,WUNTRACED);
+  rmdir("/sys/fs/cgroup/pids/alpine-test");
+  return status;
+}
 int mkdir_p(const char *path,mode_t mode)
 {
   /* Adapted from http://stackoverflow.com/a/2336245/119527 */
@@ -53,21 +61,15 @@ int mkdir_p(const char *path,mode_t mode)
 
 int main(int argc, char *argv[])
 {
-  int flags = 0;
   int rc=0;
 
-  rc = mount("none", "/", NULL, MS_PRIVATE | MS_REC, NULL);
+  rc = mount_host_root();
   if(rc < 0){
     printf("/ mount Error: %d\n", rc);
     return(rc);
   }
 
-  flags |= CLONE_NEWPID;
-  flags |= CLONE_NEWNS;
-  //flags |= CLONE_NEWNET;
-  //flags |= CLONE_NEWUTS;
-  //flags |= CLONE_NEWIPC;
-  rc = unshare(flags);
+  rc = unshare_namespace();
   if(rc < 0){
     printf("unshare Error: %d\n", rc);
   }
@@ -84,9 +86,7 @@ int main(int argc, char *argv[])
       // parent
     default:
       {
-        int status;
-        waitpid(pid,&status,WUNTRACED);
-        rmdir("/sys/fs/cgroup/pids/alpine-test");
+        int status = wait_container_process(pid);
         if(WIFEXITED(status)){
           printf("exit status = %d\n",WEXITSTATUS(status));
           return WEXITSTATUS(status);

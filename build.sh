@@ -3,4 +3,7 @@ flag=""
 if [ "${1}" = "--debug" ]; then
   flag="${flag} -g"
 fi
-gcc ${flag} main.c -static -o bin/container
+
+files="main.c mount-host.c unshare-namespace.c"
+
+gcc ${flag} ${files} -static -o bin/container
