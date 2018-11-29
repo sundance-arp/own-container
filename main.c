@@ -13,6 +13,7 @@
 #include "mount-host.h"
 #include "unshare-namespace.h"
 #include "utils.h"
+#include "manage-cgroups.h"
 
 
 int wait_container_process(int pid){
@@ -63,27 +64,13 @@ int main(int argc, char *argv[])
 
   mount_cgroup_fs();
 
-  // コンテナ用のcgroupディレクトリ作成
-  mkdir("/sys/fs/cgroup/pids/alpine-test",0755);
-  // cgroupへpidの書き込み
-  FILE *cgroup_file;
-  cgroup_file = fopen("/sys/fs/cgroup/pids/alpine-test/tasks","a+");
-  if (cgroup_file == NULL) {
-    printf("cgroup task file open Error\n");
-    exit(1);
-  }
-  // cgroupへpidの上限の書き込み
-  int container_process_pid = getpid();
-  fprintf(cgroup_file,"%d\n",container_process_pid);
-  fclose(cgroup_file);
-  cgroup_file = fopen("/sys/fs/cgroup/pids/alpine-test/pids.max","a+");
-  if (cgroup_file == NULL) {
-    printf("cannot open\n");
-    exit(1);
-  }
-  fprintf(cgroup_file,"%d\n",100);
-  fclose(cgroup_file);
+  char container_cgroups_pid_dir[] = "/sys/fs/cgroup/pids/alpine-test";
 
+  create_container_cgroups_directory(container_cgroups_pid_dir);
+
+  write_tasks_container_pid(container_cgroups_pid_dir);
+ 
+  write_pid_max(container_cgroups_pid_dir, 100);
 
   rc = chdir("./alpine-test");
   if(rc < 0){
