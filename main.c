@@ -62,7 +62,10 @@ int main(int argc, char *argv[])
       break;
   }
 
-  mount_cgroup_fs();
+  rc = mount_cgroup_fs();
+  if(rc < 0){
+    return rc;
+  }
 
   char container_cgroups_pid_dir[] = "/sys/fs/cgroup/pids/alpine-test";
 

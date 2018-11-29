@@ -31,4 +31,5 @@ int mount_cgroup_fs(){
       return(rc);
     }
   }
+  return 0;
 }
