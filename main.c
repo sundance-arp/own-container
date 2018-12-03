@@ -15,16 +15,44 @@
 #include "utils.h"
 #include "manage-cgroups.h"
 
+#define CONTAINER_NAME_MAX 200
 
-int wait_container_process(int pid){
+int wait_container_process(int pid,char *container_name){
   int status;
   waitpid(pid,&status,WUNTRACED);
-  rmdir("/sys/fs/cgroup/pids/alpine-test");
+  char rmdir_path[PATH_MAX];
+  snprintf(rmdir_path, PATH_MAX, "/sys/fs/cgroup/pids/%s", container_name);
+  rmdir(rmdir_path);
   return status;
+}
+
+int check_argument(int argc,char *argv[]){
+  if(argc < 2){
+    printf("rootを指定してください");
+    exit(0);
+  }
+
+  return 0;
+}
+int set_container_name(char *argv[],char *container_name){
+  char absolute_path[PATH_MAX];
+  realpath(argv[1], absolute_path);
+  printf("abspath: %s\n",absolute_path);
+  char *splited_path[SPLIT_MAX];
+  int count = split(absolute_path,"/",splited_path);
+  for(int index;index <= count;index++){
+    printf("splitted: %s\n",splited_path[index]);
+  }
+  strncpy(container_name,splited_path[count],CONTAINER_NAME_MAX);
+  return 0;
 }
 
 int main(int argc, char *argv[])
 {
+  check_argument(argc,argv);
+  char container_name[CONTAINER_NAME_MAX];
+  set_container_name(argv, container_name);
+  printf("Container Name: %s\n",container_name);
   int rc=0;
 
   rc = mount_host_root();
@@ -50,7 +78,7 @@ int main(int argc, char *argv[])
       // parent
     default:
       {
-        int status = wait_container_process(pid);
+        int status = wait_container_process(pid,container_name);
         if(WIFEXITED(status)){
           printf("exit status = %d\n",WEXITSTATUS(status));
           return WEXITSTATUS(status);
@@ -67,15 +95,16 @@ int main(int argc, char *argv[])
     return rc;
   }
 
-  char container_cgroups_pid_dir[] = "/sys/fs/cgroup/pids/alpine-test";
+  char container_cgroups_pid_dir[PATH_MAX];
+  snprintf(container_cgroups_pid_dir, PATH_MAX, "/sys/fs/cgroup/pids/%s", container_name);
 
   create_container_cgroups_directory(container_cgroups_pid_dir);
 
   write_tasks_container_pid(container_cgroups_pid_dir);
- 
+
   write_pid_max(container_cgroups_pid_dir, 100);
 
-  rc = chdir("./alpine-test");
+  rc = chdir(argv[1]);
   if(rc < 0){
     printf("chdir Error: %d\n", rc);
   }
