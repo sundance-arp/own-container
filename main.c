@@ -85,16 +85,15 @@ int main(int argc, char *argv[])
     return(-1);
   }
 
-  rc = mount("proc", "./proc", "proc", MS_NOSUID|MS_NOEXEC|MS_NODEV, NULL);
+  rc = mount_proc_fs();
   if(rc < 0){
-    printf("proc mount Error: %d\n", rc);
-    return(-1);
+    return(rc);
   }
-  rc = mount("dev","./dev", "dev", MS_BIND | MS_REC, 0);
-  if(rc < 0){
-    printf("dev mount Error: %d\n", rc);
-    return(-1);
-  }
+  //rc = mount("dev","./dev", "dev", MS_BIND | MS_REC, 0);
+  //if(rc < 0){
+  //  printf("dev mount Error: %d\n", rc);
+  //  return(-1);
+  //}
 
   //rc = mount("devpts","/dev/pts", "devpts", MS_BIND, 0);
   //if(rc < 0){
