@@ -37,13 +37,9 @@ int check_argument(int argc,char *argv[]){
 int set_container_name(char *argv[],char *container_name){
   char absolute_path[PATH_MAX];
   realpath(argv[1], absolute_path);
-  printf("abspath: %s\n",absolute_path);
-  char *splited_path[SPLIT_MAX];
-  int count = split(absolute_path,"/",splited_path);
-  for(int index;index <= count;index++){
-    printf("splitted: %s\n",splited_path[index]);
-  }
-  strncpy(container_name,splited_path[count],CONTAINER_NAME_MAX);
+  char *splitted_path[SPLIT_MAX];
+  int count = split(absolute_path,"/",splitted_path);
+  strncpy(container_name,splitted_path[count],CONTAINER_NAME_MAX);
   return 0;
 }
 
