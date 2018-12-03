@@ -6,6 +6,8 @@
 #include <limits.h>
 #include <errno.h>
 
+#include "utils.h"
+
 int mkdir_p(const char *path,mode_t mode){
   /* Adapted from http://stackoverflow.com/a/2336245/119527 */
   const size_t len = strlen(path);
@@ -42,4 +44,21 @@ int mkdir_p(const char *path,mode_t mode){
   }
 
   return 0;
+}
+int split(char *input, char *separator, char* output[]){
+  char* tp;
+
+  int count = 0;
+  tp = strtok(input, separator);
+  output[count] = tp;
+  while(1){
+    tp = strtok(NULL, separator);
+    if(tp == NULL){
+      break;
+    }
+    count++;
+    output[count] = tp;
+  }
+
+  return count;
 }
