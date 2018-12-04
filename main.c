@@ -46,9 +46,11 @@ int set_container_name(char *argv[],char *container_name){
 int main(int argc, char *argv[])
 {
   check_argument(argc,argv);
+
   char container_name[CONTAINER_NAME_MAX];
   set_container_name(argv, container_name);
   printf("Container Name: %s\n",container_name);
+
   int rc=0;
 
   rc = mount_host_root();
