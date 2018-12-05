@@ -7,8 +7,8 @@ int unshare_namespace(){
   int flags = 0;
   flags |= CLONE_NEWPID;
   flags |= CLONE_NEWNS;
+  flags |= CLONE_NEWUTS;
+  flags |= CLONE_NEWIPC;
   //flags |= CLONE_NEWNET;
-  //flags |= CLONE_NEWUTS;
-  //flags |= CLONE_NEWIPC;
   return unshare(flags);
 }

@@ -470,6 +470,9 @@ int main(int argc, char *argv[])
   //}
   //mount -t devpts devpts /dev/pts
   //mount("devpts", "/dev/pts", "devpts",0,0);
+  //
+
+  sethostname(container_name,strlen(container_name));
 
   rc = execl("/bin/sh","/bin/sh", NULL);
   if(rc < 0){
