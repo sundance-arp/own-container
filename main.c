@@ -13,7 +13,7 @@
 #include<sys/user.h>
 
 #include "mount.h"
-#include "unshare-namespace.h"
+#include "namespace.h"
 #include "utils.h"
 #include "cgroups.h"
 
