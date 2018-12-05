@@ -12,10 +12,10 @@
 #include <sys/ptrace.h>
 #include<sys/user.h>
 
-#include "mount-host.h"
+#include "mount.h"
 #include "unshare-namespace.h"
 #include "utils.h"
-#include "manage-cgroups.h"
+#include "cgroups.h"
 
 #define CONTAINER_NAME_MAX 200
 const char *systemcall_table[] = {
