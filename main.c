@@ -137,20 +137,6 @@ int main(int argc, char *argv[])
   if(rc < 0){
     return(rc);
   }
-  //rc = mount("dev","./dev", "dev", MS_BIND | MS_REC, 0);
-  //if(rc < 0){
-  //  printf("dev mount Error: %d\n", rc);
-  //  return(-1);
-  //}
-
-  //rc = mount("devpts","/dev/pts", "devpts", MS_BIND, 0);
-  //if(rc < 0){
-  //    printf("devpts mount Error: %d\n", rc);
-  //    return(-1);
-  //}
-  //mount -t devpts devpts /dev/pts
-  //mount("devpts", "/dev/pts", "devpts",0,0);
-  //
 
   sethostname(container_name,strlen(container_name));
 
