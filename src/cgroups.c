@@ -8,7 +8,7 @@ int create_container_cgroups_directory(char* path){
   return mkdir(path,0755);
 }
 
-int write_tasks_container_pid(char* cgroup_subsystem_path){
+int write_tasks_container_pid(char* cgroup_subsystem_path, int pid){
   // cgroupへpidの書き込み
   FILE *cgroups_file;
   char tasks_path[PATH_MAX];
@@ -18,6 +18,7 @@ int write_tasks_container_pid(char* cgroup_subsystem_path){
     printf("cgroup task file open Error\n");
     exit(1);
   }
+  fprintf(cgroups_file,"%d\n",pid);
   fclose(cgroups_file);
   return 0;
 }

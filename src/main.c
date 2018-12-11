@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 
   create_container_cgroups_directory(container_cgroups_pid_dir);
 
-  write_tasks_container_pid(container_cgroups_pid_dir);
+  write_tasks_container_pid(container_cgroups_pid_dir, pid);
 
   write_pid_max(container_cgroups_pid_dir, 100);
 
