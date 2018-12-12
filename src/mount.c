@@ -43,16 +43,6 @@ int mount_dev_fs(){
   return 0;
 }
 
-int mount_devpts_fs(){
-  int rc = mount("devpts", "./dev/pts", "devpts", MS_BIND|MS_REC|MS_NOSUID|MS_NODEV, NULL);
-  if(rc < 0){
-    printf("devpts mount Error: %d\n", rc);
-    return(-1);
-  }
-  return 0;
-}
-
-
 int mount_proc_fs(){
   int rc = mount("proc", "./proc", "proc", MS_NOSUID|MS_NOEXEC|MS_NODEV, NULL);
   if(rc < 0){
