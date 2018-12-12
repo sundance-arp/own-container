@@ -127,15 +127,21 @@ int main(int argc, char *argv[])
   if(rc < 0){
     printf("chdir Error: %d\n", rc);
   }
-  rc = chroot("./");
+
+  rc = mount_dev_fs();
   if(rc < 0){
-    printf("chroot Error: %d\n", rc);
-    return(-1);
+    return(rc);
   }
 
   rc = mount_proc_fs();
   if(rc < 0){
     return(rc);
+  }
+
+  rc = chroot("./");
+  if(rc < 0){
+    printf("chroot Error: %d\n", rc);
+    return(-1);
   }
 
   sethostname(container_name,strlen(container_name));
