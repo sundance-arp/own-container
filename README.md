@@ -3,7 +3,6 @@ Container Engine
 
 ## TODO
 Immediate:
-- /dev/ mount verification
 - Argument
 - Optionalization systemcall trace
 - User namespace
