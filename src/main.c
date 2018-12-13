@@ -12,6 +12,7 @@
 #include <sys/ptrace.h>
 #include <sys/user.h>
 #include <time.h>
+#include <getopt.h>
 
 #include "mount.h"
 #include "namespace.h"
@@ -66,6 +67,42 @@ int set_container_name(char *argv[],char *container_name){
   char *splitted_path[SPLIT_MAX];
   int count = split(absolute_path,"/",splitted_path);
   strncpy(container_name,splitted_path[count],CONTAINER_NAME_MAX);
+  return 0;
+}
+
+// TODO: オプション機能の導入
+int parse_arg(int argc, char* argv[])
+{
+  int i, opt;
+
+  // 引数がなくなるまで回す
+  while((opt = getopt(argc, argv, "fgh:")) != -1) {
+    switch(opt) {
+      case 'f':
+        printf("-fがオプションとして渡されました\n");
+        break;
+
+      case 'g':
+        printf("-gがオプションとして渡されました\n");
+        break;
+
+      case 'h':
+        printf("-hがオプションとして渡されました\n");
+        printf("引数optarg = %s\n", optarg);
+        break;
+
+      default: /* '?' */
+        //指定していないオプションが渡された場合
+        printf("Usage: %s [-f] [-g] [-h argment] arg1 ...\n", argv[0]);
+        break;
+    }
+  }
+
+  //オプション以外の引数を出力する
+  for (i = optind; i < argc; i++) {
+    printf("arg = %s\n", argv[i]);
+  }
+
   return 0;
 }
 
