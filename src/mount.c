@@ -35,6 +35,7 @@ int mount_cgroup_fs(){
 }
 
 int mount_dev_fs(){
+  // ここのオプションは検討の余地あり
   int rc = mount("/dev", "./dev", "devtmpfs", MS_BIND|MS_REC|MS_NOSUID|MS_NODEV, NULL);
   if(rc < 0){
     printf("dev mount Error: %d\n", rc);
