@@ -59,6 +59,7 @@ int check_argument(int argc,char *argv[]){
 
   return 0;
 }
+
 int set_container_name(char *argv[],char *container_name){
   char absolute_path[PATH_MAX];
   realpath(argv[1], absolute_path);
