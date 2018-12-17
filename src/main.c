@@ -78,6 +78,11 @@ int parse_arg(int argc, char* argv[])
   // 引数がなくなるまで回す
   while((opt = getopt(argc, argv, "fgh:")) != -1) {
     switch(opt) {
+      // trace option
+      case 't':
+        printf("-tがオプションとして渡されました\n");
+        break;
+
       case 'f':
         printf("-fがオプションとして渡されました\n");
         break;
