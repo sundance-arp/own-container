@@ -81,6 +81,7 @@ int parse_arg(int argc, char* argv[])
       // trace option
       case 't':
         printf("-tがオプションとして渡されました\n");
+        printf("引数optarg = %s\n", optarg);
         break;
 
       case 'f':
