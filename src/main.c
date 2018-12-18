@@ -1,4 +1,7 @@
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
+
 #include <sys/mount.h>
 #include <sched.h>
 #include <unistd.h>
@@ -65,7 +68,8 @@ int set_container_name(char *argv[],char *container_name){
   char absolute_path[PATH_MAX];
   realpath(argv[1], absolute_path);
   char *splitted_path[SPLIT_MAX];
-  int count = split(absolute_path,"/",splitted_path);
+  char slash[]="/";
+  int count = split(absolute_path,slash,splitted_path);
   strncpy(container_name,splitted_path[count],CONTAINER_NAME_MAX);
   return 0;
 }

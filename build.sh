@@ -9,5 +9,5 @@ fi
 
 files="main.c mount.c namespace.c utils.c cgroups.c ptrace.c"
 
-$(cd ${src_dir}; gcc ${flag} ${files} -static -o ${project_dir}/bin/container)
+$(cd ${src_dir}; g++ ${flag} ${files} -static -o ${project_dir}/bin/container)
 
