@@ -35,7 +35,6 @@ int trace_container_systemcall(int pid,char *container_name){
   ptrace_log = fopen("./tracelog","a+");
 
   while(1){
-    ptrace(PTRACE_TRACEME, 0, NULL, NULL);
     ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
     waitpid(pid,&status,WUNTRACED);
     if(WIFEXITED(status)){
@@ -58,7 +57,7 @@ int trace_container_systemcall(int pid,char *container_name){
 
 int wait_container_process(int pid,char *container_name, std::map<std::string,const char *> command_options){
   int status;
-  if(command_options.at("trace") == 0){
+  if(command_options.count("trace") == 0){
     waitpid(pid,&status,WUNTRACED);
   }else {
     trace_container_systemcall(pid, container_name);
@@ -93,9 +92,7 @@ std::map<std::string,const char *> parse_argument(int argc, char* argv[])
     switch(opt) {
       case 't':
         {
-          printf("-tがオプションとして渡されました\n");
           command_options.insert(std::make_pair("trace", ""));
-          printf("%lu\n", command_options.count("trace"));
           break;
         }
 
@@ -115,21 +112,20 @@ std::map<std::string,const char *> parse_argument(int argc, char* argv[])
 
       default:
         {
-          //指定していないオプションが渡された場合
-          printf("Usage: %s [-f] [-g] [-h argment] arg1 ...\n", argv[0]);
+          printf("Usage:\n");
+          printf("* [-t] trace systemcall\n");
           exit(1);
         }
     }
   }
 
-  printf("optind:%d\n",optind);
   // オプションではない引数の数を数える
   int no_opt_argument = 0;
   for (int i = optind; i < argc; i++) {
     no_opt_argument++;
   }
-  //
-  //オプション以外の引数を出力する
+
+  // オプション以外の引数はrootfsのパスのみ
   if(no_opt_argument < 1){
     printf("rootを指定してください\n");
     exit(1);
