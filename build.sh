@@ -7,7 +7,7 @@ if [ "${1}" = "--debug" ]; then
   flag="${flag} -g"
 fi
 
-files="main.c mount.c namespace.c utils.c cgroups.c ptrace.c"
+files="main.cpp mount.c namespace.c utils.c cgroups.c ptrace.c"
 
 $(cd ${src_dir}; g++ ${flag} ${files} -static -o ${project_dir}/bin/container)
 
