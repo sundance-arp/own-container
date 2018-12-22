@@ -16,6 +16,9 @@
 #include <sys/user.h>
 #include <time.h>
 #include <getopt.h>
+#include <map>
+#include <string>
+
 
 #include "mount.h"
 #include "namespace.h"
@@ -25,13 +28,14 @@
 
 #define CONTAINER_NAME_MAX 200
 
-int wait_container_process(int pid,char *container_name){
+int trace_container_systemcall(int pid,char *container_name){
   struct user_regs_struct regs;
   int status;
   FILE *ptrace_log;
   ptrace_log = fopen("./tracelog","a+");
 
   while(1){
+    ptrace(PTRACE_TRACEME, 0, NULL, NULL);
     ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
     waitpid(pid,&status,WUNTRACED);
     if(WIFEXITED(status)){
@@ -49,11 +53,22 @@ int wait_container_process(int pid,char *container_name){
   }
 
   fclose(ptrace_log);
+  return status;
+}
+
+int wait_container_process(int pid,char *container_name, std::map<std::string,const char *> command_options){
+  int status;
+  if(command_options.at("trace") == 0){
+    waitpid(pid,&status,WUNTRACED);
+  }else {
+    trace_container_systemcall(pid, container_name);
+  }
   char rmdir_path[PATH_MAX];
   snprintf(rmdir_path, PATH_MAX, "/sys/fs/cgroup/pids/%s", container_name);
   rmdir(rmdir_path);
   return status;
 }
+
 
 int check_argument(int argc,char *argv[]){
   if(argc < 2){
@@ -64,9 +79,74 @@ int check_argument(int argc,char *argv[]){
   return 0;
 }
 
-int set_container_name(char *argv[],char *container_name){
+
+// TODO: オプション機能の導入
+std::map<std::string,const char *> parse_argument(int argc, char* argv[])
+{
+  int opt;
+  // optionの結果が入るmap
+  std::map<std::string,const char *> command_options;
+
+
+  // 引数がなくなるまで回す
+  while((opt = getopt(argc, argv, "fgh:t")) != -1) {
+    switch(opt) {
+      case 't':
+        {
+          printf("-tがオプションとして渡されました\n");
+          command_options.insert(std::make_pair("trace", ""));
+          printf("%lu\n", command_options.count("trace"));
+          break;
+        }
+
+        // getoptの例
+        //case 'f':
+        //  {
+        //    printf("-fがオプションとして渡されました\n");
+        //    break;
+        //  }
+
+        //case 'h':
+        //  {
+        //    printf("-hがオプションとして渡されました\n");
+        //    printf("引数optarg = %s\n", optarg);
+        //    break;
+        //  }
+
+      default:
+        {
+          //指定していないオプションが渡された場合
+          printf("Usage: %s [-f] [-g] [-h argment] arg1 ...\n", argv[0]);
+          exit(1);
+        }
+    }
+  }
+
+  printf("optind:%d\n",optind);
+  // オプションではない引数の数を数える
+  int no_opt_argument = 0;
+  for (int i = optind; i < argc; i++) {
+    no_opt_argument++;
+  }
+  //
+  //オプション以外の引数を出力する
+  if(no_opt_argument < 1){
+    printf("rootを指定してください\n");
+    exit(1);
+  }else if(no_opt_argument > 1){
+    printf("無効なオプションです\n");
+    exit(1);
+  }else{
+    command_options.insert(std::make_pair("rootfs_path", argv[optind]));
+  }
+
+  return command_options;
+}
+
+
+int set_container_name(const char *rootfs_path,char *container_name){
   char absolute_path[PATH_MAX];
-  realpath(argv[1], absolute_path);
+  realpath(rootfs_path, absolute_path);
   char *splitted_path[SPLIT_MAX];
   char slash[]="/";
   int count = split(absolute_path,slash,splitted_path);
@@ -74,54 +154,14 @@ int set_container_name(char *argv[],char *container_name){
   return 0;
 }
 
-// TODO: オプション機能の導入
-int parse_arg(int argc, char* argv[])
-{
-  int i, opt;
-
-  // 引数がなくなるまで回す
-  while((opt = getopt(argc, argv, "fgh:")) != -1) {
-    switch(opt) {
-      // trace option
-      case 't':
-        printf("-tがオプションとして渡されました\n");
-        printf("引数optarg = %s\n", optarg);
-        break;
-
-      case 'f':
-        printf("-fがオプションとして渡されました\n");
-        break;
-
-      case 'g':
-        printf("-gがオプションとして渡されました\n");
-        break;
-
-      case 'h':
-        printf("-hがオプションとして渡されました\n");
-        printf("引数optarg = %s\n", optarg);
-        break;
-
-      default: /* '?' */
-        //指定していないオプションが渡された場合
-        printf("Usage: %s [-f] [-g] [-h argment] arg1 ...\n", argv[0]);
-        break;
-    }
-  }
-
-  //オプション以外の引数を出力する
-  for (i = optind; i < argc; i++) {
-    printf("arg = %s\n", argv[i]);
-  }
-
-  return 0;
-}
 
 int main(int argc, char *argv[])
 {
-  check_argument(argc,argv);
+  //check_argument(argc,argv);
+  std::map<std::string,const char *> command_options = parse_argument(argc,argv);
 
   char container_name[CONTAINER_NAME_MAX];
-  set_container_name(argv, container_name);
+  set_container_name(command_options.at("rootfs_path"), container_name);
   printf("Container Name: %s\n",container_name);
 
   int rc=0;
@@ -145,12 +185,14 @@ int main(int argc, char *argv[])
       break;
       // child
     case 0:
-      ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+      if(command_options.count("trace") > 0){
+        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+      }
       break;
       // parent
     default:
       {
-        wait_container_process(pid,container_name);
+        wait_container_process(pid,container_name, command_options);
         return 0;
       }
       break;
@@ -171,7 +213,7 @@ int main(int argc, char *argv[])
 
   write_pid_max(container_cgroups_pid_dir, 100);
 
-  rc = chdir(argv[1]);
+  rc = chdir(command_options.at("rootfs_path"));
   if(rc < 0){
     printf("chdir Error: %d\n", rc);
   }
