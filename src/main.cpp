@@ -79,7 +79,6 @@ int check_argument(int argc,char *argv[]){
 }
 
 
-// TODO: オプション機能の導入
 std::map<std::string,const char *> parse_argument(int argc, char* argv[])
 {
   int opt;
