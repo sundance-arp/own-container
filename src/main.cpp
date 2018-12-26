@@ -187,6 +187,12 @@ int main(int argc, char *argv[])
       // parent
     default:
       {
+        char container_cgroups_pid_dir[PATH_MAX];
+        snprintf(container_cgroups_pid_dir, PATH_MAX, "/sys/fs/cgroup/pids/%s", container_name);
+        create_container_cgroups_directory(container_cgroups_pid_dir);
+        write_tasks_container_pid(container_cgroups_pid_dir, pid);
+        write_pid_max(container_cgroups_pid_dir, 100);
+
         wait_container_process(pid,container_name, command_options);
         return 0;
       }
@@ -197,16 +203,6 @@ int main(int argc, char *argv[])
   if(rc < 0){
     return rc;
   }
-
-
-  char container_cgroups_pid_dir[PATH_MAX];
-  snprintf(container_cgroups_pid_dir, PATH_MAX, "/sys/fs/cgroup/pids/%s", container_name);
-
-  create_container_cgroups_directory(container_cgroups_pid_dir);
-
-  write_tasks_container_pid(container_cgroups_pid_dir, pid);
-
-  write_pid_max(container_cgroups_pid_dir, 100);
 
   rc = chdir(command_options.at("rootfs_path"));
   if(rc < 0){
