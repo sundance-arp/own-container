@@ -12,6 +12,7 @@ int unshare_namespace(){
   flags |= CLONE_NEWNS;
   flags |= CLONE_NEWUTS;
   flags |= CLONE_NEWIPC;
+	flags |= CLONE_NEWUSER;
   //flags |= CLONE_NEWNET;
   return unshare(flags);
 }
