@@ -199,6 +199,8 @@ int main(int argc, char *argv[])
       break;
   }
 
+  setgroups_control();
+
   rc = mount_cgroup_fs();
   if(rc < 0){
     return rc;

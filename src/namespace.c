@@ -20,7 +20,7 @@ int unshare_namespace(){
 }
 
 
-void setgroups_control(int action){
+void setgroups_control(){
   const char *file = "/proc/self/setgroups";
   const char *cmd;
   FILE *fd;
@@ -34,5 +34,21 @@ void setgroups_control(int action){
   }
 
   fprintf(fd,"%s",cmd);
+  fclose(fd);
+}
+
+void map_id(const char *file, int from, int to){
+  char *buf;
+  FILE *fd;
+
+  fd = fopen(file,"w");
+  if (fd == NULL) {
+    printf("uid_map or gid_map file open Error\n");
+    exit(1);
+  }
+
+  sprintf(buf, "%d %d 1", from, to);
+  fprintf(fd,"%s",buf);
+  free(buf);
   fclose(fd);
 }
