@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sched.h>
+#include <fcntl.h>
+
 
 int unshare_namespace(){
   int flags = 0;
@@ -15,4 +17,22 @@ int unshare_namespace(){
   flags |= CLONE_NEWUSER;
   //flags |= CLONE_NEWNET;
   return unshare(flags);
+}
+
+
+void setgroups_control(int action){
+  const char *file = "/proc/self/setgroups";
+  const char *cmd;
+  FILE *fd;
+
+  cmd = "deny";
+
+  fd = fopen(file,"w");
+  if (fd == NULL) {
+    printf("setgroups file open Error\n");
+    exit(1);
+  }
+
+  fprintf(fd,"%s",cmd);
+  fclose(fd);
 }
