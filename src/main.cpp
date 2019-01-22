@@ -11,10 +11,10 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <string.h>
-#include <limits.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
 #include <time.h>
+#include <limits.h>
 #include <getopt.h>
 #include <map>
 #include <string>
@@ -27,6 +27,18 @@
 #include "ptrace.h"
 
 #define CONTAINER_NAME_MAX 200
+#define STACK_SIZE (1024 * 1024)
+
+
+static char child_stack[STACK_SIZE];
+
+struct container_arg
+{
+  std::map<std::string,const char *> command_options;
+  char *container_name;
+  int    pipe_fd[2];
+};
+
 
 int trace_container_systemcall(int pid,char *container_name){
   struct user_regs_struct regs;
@@ -149,69 +161,24 @@ int set_container_name(const char *rootfs_path,char *container_name){
   return 0;
 }
 
-
-int main(int argc, char *argv[])
-{
-  //check_argument(argc,argv);
-  std::map<std::string,const char *> command_options = parse_argument(argc,argv);
-
-  char container_name[CONTAINER_NAME_MAX];
-  set_container_name(command_options.at("rootfs_path"), container_name);
-  printf("Container Name: %s\n",container_name);
-
-  int rc=0;
-
-  int origin_euid = geteuid();
-  int origin_egid = getegid();
-
-  rc = mount_host_root();
-  if(rc < 0){
-    printf("/ mount Error: %d\n", rc);
-    return(rc);
+int create_container(void * arg){
+  struct container_arg *ca = (container_arg *)arg;
+  char ch;
+  close(ca->pipe_fd[1]);
+  if (read(ca->pipe_fd[0], &ch, 1) != 0) {
+    printf("pipe read from child Error \n");
+    exit(EXIT_FAILURE);
   }
 
-  rc = unshare_namespace();
-  if(rc < 0){
-    printf("unshare Error: %d\n", rc);
+  if(ca->command_options.count("trace") > 0){
+    ptrace(PTRACE_TRACEME, 0, NULL, NULL);
   }
-
-  int pid = fork();
-  switch(pid){
-    // error
-    case -1:
-      printf("fork Error: %d\n", pid);
-      break;
-      // child
-    case 0:
-      if(command_options.count("trace") > 0){
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-      }
-      break;
-      // parent
-    default:
-      {
-        char container_cgroups_pid_dir[PATH_MAX];
-        snprintf(container_cgroups_pid_dir, PATH_MAX, "/sys/fs/cgroup/pids/%s", container_name);
-        create_container_cgroups_directory(container_cgroups_pid_dir);
-        write_tasks_container_pid(container_cgroups_pid_dir, pid);
-        write_pid_max(container_cgroups_pid_dir, 100);
-
-        wait_container_process(pid,container_name, command_options);
-        return 0;
-      }
-      break;
-  }
-
-  setgroups_control();
-  map_id("/proc/self/uid_map", 0, origin_euid);
-  map_id("/proc/self/gid_map", 0, origin_egid);
-
-  rc = mount_cgroup_fs();
+  int rc = mount_cgroup_fs();
   if(rc < 0){
     return rc;
   }
 
-  rc = chdir(command_options.at("rootfs_path"));
+  rc = chdir(ca->command_options.at("rootfs_path"));
   if(rc < 0){
     printf("chdir Error: %d\n", rc);
   }
@@ -232,13 +199,77 @@ int main(int argc, char *argv[])
     return(-1);
   }
 
-  sethostname(container_name,strlen(container_name));
+  sethostname(ca->container_name,strlen(ca->container_name));
 
   rc = execl("/bin/sh","/bin/sh", NULL);
   if(rc < 0){
     printf("exec Error: %d\n", rc);
     return(-1);
   }
+}
 
+
+int main(int argc, char *argv[])
+{
+  std::map<std::string,const char *> command_options = parse_argument(argc,argv);
+
+  char container_name[CONTAINER_NAME_MAX];
+  set_container_name(command_options.at("rootfs_path"), container_name);
+  printf("Container Name: %s\n",container_name);
+
+  int rc=0;
+
+  rc = mount_host_root();
+  if(rc < 0){
+    printf("/ mount Error: %d\n", rc);
+    return(rc);
+  }
+
+  //rc = unshare_namespace();
+  //if(rc < 0){
+  //  printf("unshare Error: %d\n", rc);
+  //}
+
+  // コンテナプロセス実行
+  int flags = 0;
+  flags |= CLONE_NEWPID;
+  flags |= CLONE_NEWNS;
+  flags |= CLONE_NEWUTS;
+  flags |= CLONE_NEWIPC;
+  flags |= CLONE_NEWUSER;
+  struct container_arg ca;
+  ca.command_options = command_options;
+  ca.container_name = container_name;
+  rc = pipe(ca.pipe_fd);
+  if (rc == -1){
+    printf("pipe create Error\n");
+    return(rc);
+  }
+  int child_pid = clone(create_container, child_stack + STACK_SIZE,flags | SIGCHLD, &ca);
+
+  // 親プロセス
+  printf("Container PID: %d\n",child_pid);
+
+  char container_cgroups_pid_dir[PATH_MAX];
+  snprintf(container_cgroups_pid_dir, PATH_MAX, "/sys/fs/cgroup/pids/%s", container_name);
+  create_container_cgroups_directory(container_cgroups_pid_dir);
+  write_tasks_container_pid(container_cgroups_pid_dir, child_pid);
+  printf("write pid max mae\n");
+  write_pid_max(container_cgroups_pid_dir, 100);
+
+
+  // ユーザーとグループのマッピング
+  char map_file_path[PATH_MAX];
+  setgroups_control(child_pid);
+  snprintf(map_file_path, PATH_MAX, "/proc/%d/uid_map", child_pid);
+  map_id(map_file_path, 0, getuid());
+  snprintf(map_file_path, PATH_MAX, "/proc/%d/gid_map", child_pid);
+  map_id(map_file_path, 0, getgid());
+
+  // コンテナプロセスを再開させる
+  close(ca.pipe_fd[1]);
+
+  wait_container_process(child_pid,container_name, command_options);
+  return 0;
 }
 
