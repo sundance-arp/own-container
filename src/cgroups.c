@@ -21,7 +21,6 @@ int write_tasks_container_pid(char* cgroup_subsystem_path, int pid){
     printf("cgroup task file open Error\n");
     exit(1);
   }
-  printf("Container PID: %d\n",pid);
   fprintf(cgroups_file,"%d\n",pid);
   fclose(cgroups_file);
   return 0;
