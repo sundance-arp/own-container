@@ -254,7 +254,6 @@ int main(int argc, char *argv[])
   snprintf(container_cgroups_pid_dir, PATH_MAX, "/sys/fs/cgroup/pids/%s", container_name);
   create_container_cgroups_directory(container_cgroups_pid_dir);
   write_tasks_container_pid(container_cgroups_pid_dir, child_pid);
-  printf("write pid max mae\n");
   write_pid_max(container_cgroups_pid_dir, 100);
 
 
