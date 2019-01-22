@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <sched.h>
 #include <fcntl.h>
+#include <limits.h>
 
 
 int unshare_namespace(){
@@ -20,14 +21,14 @@ int unshare_namespace(){
 }
 
 
-void setgroups_control(){
-  const char *file = "/proc/self/setgroups";
-  const char *cmd;
+void setgroups_control(int pid){
+  char map_file_path[PATH_MAX] = {0};
+  snprintf(map_file_path, PATH_MAX, "/proc/%d/setgroups", pid);
+  const char *cmd = "deny";
   FILE *fd;
 
-  cmd = "deny";
 
-  fd = fopen(file,"w");
+  fd = fopen(map_file_path,"w");
   if (fd == NULL) {
     printf("setgroups file open Error\n");
     exit(1);
@@ -39,7 +40,7 @@ void setgroups_control(){
 
 
 void map_id(const char *file, int from, int to){
-  char *buf;
+  char buf[120];
   FILE *fd;
 
   fd = fopen(file,"w");
@@ -48,8 +49,7 @@ void map_id(const char *file, int from, int to){
     exit(1);
   }
 
-  sprintf(buf, "%d %d 1", from, to);
+  snprintf(buf, 120, "%d %d 1", from, to);
   fprintf(fd,"%s",buf);
-  free(buf);
   fclose(fd);
 }
