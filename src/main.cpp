@@ -161,6 +161,9 @@ int main(int argc, char *argv[])
 
   int rc=0;
 
+  int origin_euid = geteuid();
+  int origin_egid = getegid();
+
   rc = mount_host_root();
   if(rc < 0){
     printf("/ mount Error: %d\n", rc);
@@ -200,6 +203,8 @@ int main(int argc, char *argv[])
   }
 
   setgroups_control();
+  map_id("/proc/self/uid_map", 0, origin_euid);
+  map_id("/proc/self/gid_map", 0, origin_egid);
 
   rc = mount_cgroup_fs();
   if(rc < 0){
