@@ -7,17 +7,19 @@
 #include <sched.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <map>
 
-
-int unshare_namespace(){
+int get_clone_flags(std::map<std::string,const char *> command_options){
   int flags = 0;
   flags |= CLONE_NEWPID;
   flags |= CLONE_NEWNS;
   flags |= CLONE_NEWUTS;
   flags |= CLONE_NEWIPC;
-  flags |= CLONE_NEWUSER;
-  //flags |= CLONE_NEWNET;
-  return unshare(flags);
+  // 非特権コンテナ時(デフォルト)
+  if(command_options.count("privilege") <= 0){
+    flags |= CLONE_NEWUSER;
+  }
+  return flags;
 }
 
 

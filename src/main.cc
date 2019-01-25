@@ -227,30 +227,17 @@ int main(int argc, char *argv[])
     return(rc);
   }
 
-  //rc = unshare_namespace();
-  //if(rc < 0){
-  //  printf("unshare Error: %d\n", rc);
-  //}
 
   // コンテナプロセス実行
   struct container_arg ca;
   ca.command_options = command_options;
   ca.container_name = container_name;
-  int flags = 0;
-  flags |= CLONE_NEWPID;
-  flags |= CLONE_NEWNS;
-  flags |= CLONE_NEWUTS;
-  flags |= CLONE_NEWIPC;
-  // 非特権コンテナ時(デフォルト)
-  if(ca.command_options.count("privilege") <= 0){
-    flags |= CLONE_NEWUSER;
-  }
-
   rc = pipe(ca.pipe_fd);
   if (rc == -1){
     printf("pipe create Error\n");
     return(rc);
   }
+  int flags = get_clone_flags(command_options);
   int child_pid = clone(create_container, child_stack + STACK_SIZE,flags | SIGCHLD, &ca);
 
   // 親プロセス
