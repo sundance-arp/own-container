@@ -32,13 +32,6 @@
 
 static char child_stack[STACK_SIZE];
 
-struct container_arg
-{
-  std::map<std::string,const char *> command_options;
-  char *container_name;
-  int    pipe_fd[2];
-};
-
 
 int trace_container_systemcall(int pid,char *container_name){
   struct user_regs_struct regs;
@@ -230,11 +223,8 @@ int main(int argc, char *argv[])
 
   // コンテナプロセス実行
   struct container_arg ca;
-  ca.command_options = command_options;
-  ca.container_name = container_name;
-  rc = pipe(ca.pipe_fd);
-  if (rc == -1){
-    printf("pipe create Error\n");
+  rc = set_container_arg(&ca,command_options, container_name);
+  if (rc < 0){
     return(rc);
   }
   int flags = get_clone_flags(command_options);

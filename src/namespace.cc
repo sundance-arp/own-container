@@ -4,10 +4,25 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <sched.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <map>
+
+#include "namespace.h"
+
+
+int set_container_arg(struct container_arg *ca, std::map<std::string,const char *> command_options,char *container_name){
+  ca->command_options = command_options;
+  ca->container_name = container_name;
+  int rc = pipe(ca->pipe_fd);
+  if (rc == -1){
+    printf("pipe create Error\n");
+    return(rc);
+  }
+  return 0;
+}
 
 int get_clone_flags(std::map<std::string,const char *> command_options){
   int flags = 0;
