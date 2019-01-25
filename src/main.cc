@@ -151,16 +151,6 @@ std::map<std::string,const char *> parse_argument(int argc, char* argv[])
 }
 
 
-int set_container_name(const char *rootfs_path,char *container_name){
-  char absolute_path[PATH_MAX];
-  realpath(rootfs_path, absolute_path);
-  char *splitted_path[SPLIT_MAX];
-  char slash[]="/";
-  int count = split(absolute_path,slash,splitted_path);
-  strncpy(container_name,splitted_path[count],CONTAINER_NAME_MAX);
-  return 0;
-}
-
 int create_container(void * arg){
   struct container_arg *ca = (container_arg *)arg;
   char ch;
@@ -206,6 +196,17 @@ int create_container(void * arg){
     printf("exec Error: %d\n", rc);
     return(-1);
   }
+}
+
+
+int set_container_name(const char *rootfs_path,char *container_name){
+  char absolute_path[PATH_MAX];
+  realpath(rootfs_path, absolute_path);
+  char *splitted_path[SPLIT_MAX];
+  char slash[]="/";
+  int count = split(absolute_path,slash,splitted_path);
+  strncpy(container_name,splitted_path[count],CONTAINER_NAME_MAX);
+  return 0;
 }
 
 
