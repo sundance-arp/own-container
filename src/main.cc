@@ -81,16 +81,6 @@ int wait_container_process(int pid,char *container_name, std::map<std::string,co
 }
 
 
-int check_argument(int argc,char *argv[]){
-  if(argc < 2){
-    printf("rootを指定してください");
-    exit(0);
-  }
-
-  return 0;
-}
-
-
 std::map<std::string,const char *> parse_argument(int argc, char* argv[])
 {
   int opt;
