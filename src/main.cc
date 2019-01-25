@@ -99,11 +99,21 @@ std::map<std::string,const char *> parse_argument(int argc, char* argv[])
 
 
   // 引数がなくなるまで回す
-  while((opt = getopt(argc, argv, "fgh:t")) != -1) {
+  while((opt = getopt(argc, argv, "fgh:tP")) != -1) {
     switch(opt) {
       case 't':
         {
           command_options.insert(std::make_pair("trace", ""));
+          break;
+        }
+
+      case 'P':
+        {
+          command_options.insert(std::make_pair("privilege", ""));
+          if(getuid() != 0){
+            printf("privilege container is need root\n");
+            exit(-1);
+          }
           break;
         }
 
@@ -125,6 +135,7 @@ std::map<std::string,const char *> parse_argument(int argc, char* argv[])
         {
           printf("Usage:\n");
           printf("* [-t] trace systemcall\n");
+          printf("* [-P] execute privilege container\n");
           exit(1);
         }
     }
@@ -232,15 +243,19 @@ int main(int argc, char *argv[])
   //}
 
   // コンテナプロセス実行
+  struct container_arg ca;
+  ca.command_options = command_options;
+  ca.container_name = container_name;
   int flags = 0;
   flags |= CLONE_NEWPID;
   flags |= CLONE_NEWNS;
   flags |= CLONE_NEWUTS;
   flags |= CLONE_NEWIPC;
-  flags |= CLONE_NEWUSER;
-  struct container_arg ca;
-  ca.command_options = command_options;
-  ca.container_name = container_name;
+  // 非特権コンテナ時(デフォルト)
+  if(ca.command_options.count("privilege") <= 0){
+    flags |= CLONE_NEWUSER;
+  }
+
   rc = pipe(ca.pipe_fd);
   if (rc == -1){
     printf("pipe create Error\n");
@@ -251,20 +266,23 @@ int main(int argc, char *argv[])
   // 親プロセス
   printf("Container PID: %d\n",child_pid);
 
+  // cgroup関連の設定
   char container_cgroups_pid_dir[PATH_MAX];
   snprintf(container_cgroups_pid_dir, PATH_MAX, "/sys/fs/cgroup/pids/%s", container_name);
   create_container_cgroups_directory(container_cgroups_pid_dir);
   write_tasks_container_pid(container_cgroups_pid_dir, child_pid);
   write_pid_max(container_cgroups_pid_dir, 100);
 
-
   // ユーザーとグループのマッピング
-  char map_file_path[PATH_MAX];
-  setgroups_control(child_pid);
-  snprintf(map_file_path, PATH_MAX, "/proc/%d/uid_map", child_pid);
-  map_id(map_file_path, 0, getuid());
-  snprintf(map_file_path, PATH_MAX, "/proc/%d/gid_map", child_pid);
-  map_id(map_file_path, 0, getgid());
+  // 非特権コンテナ時(デフォルト)
+  if(ca.command_options.count("privilege") <= 0){
+    char map_file_path[PATH_MAX];
+    setgroups_control(child_pid);
+    snprintf(map_file_path, PATH_MAX, "/proc/%d/uid_map", child_pid);
+    map_id(map_file_path, 0, getuid());
+    snprintf(map_file_path, PATH_MAX, "/proc/%d/gid_map", child_pid);
+    map_id(map_file_path, 0, getgid());
+  }
 
   // コンテナプロセスを再開させる
   close(ca.pipe_fd[1]);
