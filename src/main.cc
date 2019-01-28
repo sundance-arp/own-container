@@ -185,7 +185,10 @@ int create_container(void * arg){
 
   sethostname(ca->container_name,strlen(ca->container_name));
 
-  rc = execl("/bin/sh","/bin/sh", NULL);
+  char *execarg[] = {(char *)"sh", NULL};
+  char *execenv[] = {NULL};
+
+  rc = execve("/bin/sh", execarg, execenv);
   if(rc < 0){
     printf("exec Error: %d\n", rc);
     return(-1);
