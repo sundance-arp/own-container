@@ -3,7 +3,6 @@ Container Engine
 
 ## TODO
 Immediate:
-- User namespace
 - Original entrypoint
 - Container image
 
