@@ -3,11 +3,13 @@ Container Engine
 
 ## TODO
 Immediate:
-- Original entrypoint
-- Container image
+- Volume mount
+- User specification
 
 More:
+- Original entrypoint
 - Seccomp
 - CRIU
 - Network namespace
+- Container image
 
