@@ -1,6 +1,3 @@
-#include <string>
-
-
 struct command_argument
 {
   bool trace;
