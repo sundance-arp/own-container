@@ -8,13 +8,16 @@
 #include <sched.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <map>
 
+#ifndef COMMANDARGUMENT_H
+#define COMMANDARGUMENT_H
+#include "commandargument.h"
+#endif
 #include "namespace.h"
 
 
-int set_container_arg(struct container_arg *ca, std::map<std::string,const char *> command_options,char *container_name){
-  ca->command_options = command_options;
+int set_container_arg(struct container_arg *ca, command_argument command_arg,char *container_name){
+  ca->command_arg = command_arg;
   ca->container_name = container_name;
   int rc = pipe(ca->pipe_fd);
   if (rc == -1){
@@ -24,14 +27,14 @@ int set_container_arg(struct container_arg *ca, std::map<std::string,const char 
   return 0;
 }
 
-int get_clone_flags(std::map<std::string,const char *> command_options){
+int get_clone_flags(command_argument command_arg){
   int flags = 0;
   flags |= CLONE_NEWPID;
   flags |= CLONE_NEWNS;
   flags |= CLONE_NEWUTS;
   flags |= CLONE_NEWIPC;
   // 非特権コンテナ時(デフォルト)
-  if(command_options.count("privilege") <= 0){
+  if(!command_arg.privilege){
     flags |= CLONE_NEWUSER;
   }
   return flags;

@@ -11,5 +11,6 @@ command_argument init_command_argument(){
   command_argument command_arg;
   command_arg.trace = false;
   command_arg.privilege = false;
+  command_arg.rootfs_path = "";
   return command_arg;
 }

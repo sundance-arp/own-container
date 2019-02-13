@@ -20,8 +20,17 @@
 #include <string>
 
 
-#include "mount.h"
+#ifndef NAMESPACE_H
+#define NAMESPACE_H
 #include "namespace.h"
+#endif
+
+#ifndef COMMANDARGUMENT_H
+#define COMMANDARGUMENT_H
+#include "commandargument.h"
+#endif
+
+#include "mount.h"
 #include "utils.h"
 #include "cgroups.h"
 #include "ptrace.h"
@@ -60,12 +69,12 @@ int trace_container_systemcall(int pid,char *container_name){
   return status;
 }
 
-int wait_container_process(int pid,char *container_name, std::map<std::string,const char *> command_options){
+int wait_container_process(int pid,char *container_name, command_argument command_arg){
   int status;
-  if(command_options.count("trace") == 0){
-    waitpid(pid,&status,WUNTRACED);
-  }else {
+  if(command_arg.trace){
     trace_container_systemcall(pid, container_name);
+  }else {
+    waitpid(pid,&status,WUNTRACED);
   }
   char rmdir_path[PATH_MAX];
   snprintf(rmdir_path, PATH_MAX, "/sys/fs/cgroup/pids/%s", container_name);
@@ -74,11 +83,11 @@ int wait_container_process(int pid,char *container_name, std::map<std::string,co
 }
 
 
-std::map<std::string,const char *> parse_argument(int argc, char* argv[])
+command_argument parse_argument(int argc, char* argv[])
 {
   int opt;
   // optionの結果が入るmap
-  std::map<std::string,const char *> command_options;
+  command_argument command_arg = init_command_argument();
 
 
   // 引数がなくなるまで回す
@@ -86,17 +95,17 @@ std::map<std::string,const char *> parse_argument(int argc, char* argv[])
     switch(opt) {
       case 't':
         {
-          command_options.insert(std::make_pair("trace", ""));
+          command_arg.trace = true;
           break;
         }
 
       case 'P':
         {
-          command_options.insert(std::make_pair("privilege", ""));
           if(getuid() != 0){
             printf("privilege container is need root\n");
             exit(-1);
           }
+          command_arg.privilege = true;
           break;
         }
 
@@ -138,10 +147,10 @@ std::map<std::string,const char *> parse_argument(int argc, char* argv[])
     printf("無効なオプションです\n");
     exit(1);
   }else{
-    command_options.insert(std::make_pair("rootfs_path", argv[optind]));
+    command_arg.rootfs_path = argv[optind];
   }
 
-  return command_options;
+  return command_arg;
 }
 
 
@@ -154,7 +163,7 @@ int create_container(void * arg){
     exit(EXIT_FAILURE);
   }
 
-  if(ca->command_options.count("trace") > 0){
+  if(ca->command_arg.trace){
     ptrace(PTRACE_TRACEME, 0, NULL, NULL);
   }
   int rc = mount_cgroup_fs();
@@ -162,7 +171,7 @@ int create_container(void * arg){
     return rc;
   }
 
-  rc = chdir(ca->command_options.at("rootfs_path"));
+  rc = chdir(ca->command_arg.rootfs_path.c_str());
   if(rc < 0){
     printf("chdir Error: %d\n", rc);
   }
@@ -209,10 +218,10 @@ int set_container_name(const char *rootfs_path,char *container_name){
 
 int main(int argc, char *argv[])
 {
-  std::map<std::string,const char *> command_options = parse_argument(argc,argv);
+  command_argument command_arg = parse_argument(argc,argv);
 
   char container_name[CONTAINER_NAME_MAX];
-  set_container_name(command_options.at("rootfs_path"), container_name);
+  set_container_name(command_arg.rootfs_path.c_str(), container_name);
   printf("Container Name: %s\n",container_name);
 
   int rc=0;
@@ -226,11 +235,11 @@ int main(int argc, char *argv[])
 
   // コンテナプロセス実行
   struct container_arg ca;
-  rc = set_container_arg(&ca,command_options, container_name);
+  rc = set_container_arg(&ca,command_arg, container_name);
   if (rc < 0){
     return(rc);
   }
-  int flags = get_clone_flags(command_options);
+  int flags = get_clone_flags(command_arg);
   int child_pid = clone(create_container, child_stack + STACK_SIZE,flags | SIGCHLD, &ca);
 
   // 親プロセス
@@ -245,7 +254,7 @@ int main(int argc, char *argv[])
 
   // ユーザーとグループのマッピング
   // 非特権コンテナ時(デフォルト)
-  if(ca.command_options.count("privilege") <= 0){
+  if(!ca.command_arg.privilege){
     char map_file_path[PATH_MAX];
     setgroups_control(child_pid);
     snprintf(map_file_path, PATH_MAX, "/proc/%d/uid_map", child_pid);
@@ -257,7 +266,7 @@ int main(int argc, char *argv[])
   // コンテナプロセスを再開させる
   close(ca.pipe_fd[1]);
 
-  wait_container_process(child_pid,container_name, command_options);
+  wait_container_process(child_pid,container_name, command_arg);
   return 0;
 }
 
