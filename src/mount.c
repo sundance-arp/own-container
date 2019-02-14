@@ -55,3 +55,13 @@ int mount_proc_fs(){
   }
   return 0;
 }
+
+// TODO: Implement a function for options like -v
+int mount_host_path(){
+  int rc = mount("/home/sundance-arp", "./mnt/hdd", NULL, MS_BIND|MS_REC|MS_NOSUID|MS_NODEV|MS_RDONLY, NULL);
+  if(rc < 0){
+    printf("host path mount Error: %d\n", rc);
+    return(-1);
+  }
+  return 0;
+}
