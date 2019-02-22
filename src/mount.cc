@@ -6,11 +6,15 @@
 #include <stdlib.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <string.h>
 
 #include <vector>
 #include <string>
 
 #include "utils.h"
+
+using std::vector;
+using std::string;
 
 int mount_host_root(){
   return mount("none", "/", NULL, MS_PRIVATE | MS_REC, NULL);
@@ -78,15 +82,31 @@ std::vector<std::string> string_split(std::string base, std::string delimiter){
   return result;                                                                
 }                                                                               
 
-// TODO: Implement a function for such as ["hoge/path:fuga/path","piyo/path:foo/path"].
-// parse_argument
-
 // TODO: Implement a function for options like -v
-int mount_host_to_container(char *host_path, char *container_path){
-  int rc = mount(host_path, container_path, NULL, MS_BIND|MS_REC|MS_NOSUID|MS_NODEV|MS_RDONLY, NULL);
+int mount_host_to_container(string host_path, string container_path, string rootfs_path){
+  int rc = mount(host_path.c_str(), (rootfs_path + "/" +container_path).c_str(), NULL, MS_BIND|MS_REC|MS_NOSUID|MS_NODEV|MS_RDONLY, NULL);
   if(rc < 0){
-    printf("host path mount Error: %d\n", rc);
+    printf("host path mount to container Error: %d\n", rc);
     return(-1);
+  }
+  return 0;
+}
+
+// TODO: Implement a function for such as ["hoge/path:fuga/path","piyo/path:foo/path"].
+int mount_host_path(vector<string> mount_paths, string rootfs_path){
+  using std::vector;
+  using std::string;
+  for (string mount_path : mount_paths) {
+    vector<string> from_to_paths = string_split(mount_path, ":");
+    if(from_to_paths.size() != 2){
+      printf("mount option format Error \n");
+      return 1;
+    }
+
+    int rc = mount_host_to_container(from_to_paths[0], from_to_paths[1], rootfs_path);
+    if(rc < 0){
+      return rc;
+    }
   }
   return 0;
 }
