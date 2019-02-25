@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -eux
 project_dir=$(cd $(dirname $0); pwd)
 src_dir="${project_dir}/src"
 
