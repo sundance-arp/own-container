@@ -82,9 +82,9 @@ std::vector<std::string> string_split(std::string base, std::string delimiter){
   return result;                                                                
 }                                                                               
 
-// TODO: Implement a function for options like -v
 int mount_host_to_container(string host_path, string container_path, string rootfs_path){
-  int rc = mount(host_path.c_str(), (rootfs_path + "/" +container_path).c_str(), NULL, MS_BIND|MS_REC|MS_NOSUID|MS_NODEV|MS_RDONLY, NULL);
+  printf("host_path: %s, container_path: %s, rootfs_path: %s , container path: %s\n",host_path.c_str(), container_path.c_str(), rootfs_path.c_str(),(rootfs_path + "/" +container_path).c_str());
+  int rc = mount(host_path.c_str(), (rootfs_path + "/" +container_path).c_str(), NULL, MS_BIND|MS_REC, NULL);
   if(rc < 0){
     printf("host path mount to container Error: %d\n", rc);
     return(-1);
@@ -100,7 +100,7 @@ int mount_host_path(vector<string> mount_paths, string rootfs_path){
     vector<string> from_to_paths = string_split(mount_path, ":");
     if(from_to_paths.size() != 2){
       printf("mount option format Error \n");
-      return 1;
+      return -1;
     }
 
     int rc = mount_host_to_container(from_to_paths[0], from_to_paths[1], rootfs_path);

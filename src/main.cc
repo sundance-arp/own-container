@@ -91,7 +91,7 @@ command_argument parse_argument(int argc, char* argv[])
 
 
   // 引数がなくなるまで回す
-  while((opt = getopt(argc, argv, "fgh:tP")) != -1) {
+  while((opt = getopt(argc, argv, "fh:tPb:")) != -1) {
     switch(opt) {
       case 't':
         {
@@ -106,6 +106,12 @@ command_argument parse_argument(int argc, char* argv[])
             exit(-1);
           }
           command_arg.privilege = true;
+          break;
+        }
+      case 'b':
+        {
+          command_arg.bind = true;
+          command_arg.bind_paths.push_back(optarg);
           break;
         }
 
@@ -169,6 +175,13 @@ int create_container(void * arg){
   int rc = mount_cgroup_fs();
   if(rc < 0){
     return rc;
+  }
+
+  if(ca->command_arg.bind){
+    rc = mount_host_path(ca->command_arg.bind_paths, ca->command_arg.rootfs_path);
+    if(rc < 0){
+      return(rc);
+    }
   }
 
   rc = chdir(ca->command_arg.rootfs_path.c_str());
