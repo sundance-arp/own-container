@@ -2,7 +2,7 @@
 project_dir=$(cd $(dirname $0); pwd)
 src_dir="${project_dir}/src"
 
-flag=""
+flag="-std=c++17 -Wall"
 if [ "${1}" = "--debug" ]; then
   flag="${flag} -g"
 fi
