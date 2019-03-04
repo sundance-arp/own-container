@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <string>
+#include <filesystem>
 
 #include "utils.h"
 
@@ -82,9 +83,10 @@ std::vector<std::string> string_split(std::string base, std::string delimiter){
   return result;                                                                
 }                                                                               
 
-int mount_host_to_container(string host_path, string container_path, string rootfs_path){
-  printf("host_path: %s, container_path: %s, rootfs_path: %s , container path: %s\n",host_path.c_str(), container_path.c_str(), rootfs_path.c_str(),(rootfs_path + "/" +container_path).c_str());
-  int rc = mount(host_path.c_str(), (rootfs_path + "/" +container_path).c_str(), NULL, MS_BIND|MS_REC, NULL);
+// TODO: Implimentation for check
+int mount_host_to_container(string host_path, string container_path, std::filesystem::path rootfs_path){
+  printf("host_path: %s, container_path: %s, rootfs_path: %s , container path: %s\n",host_path.c_str(), container_path.c_str(), rootfs_path.c_str(),(rootfs_path.string() + "/" +container_path).c_str());
+  int rc = mount(host_path.c_str(), (rootfs_path.string() + "/" +container_path).c_str(), NULL, MS_BIND|MS_REC, NULL);
   if(rc < 0){
     printf("host path mount to container Error: %d\n", rc);
     return(-1);
@@ -92,8 +94,7 @@ int mount_host_to_container(string host_path, string container_path, string root
   return 0;
 }
 
-// TODO: Implement a function for such as ["hoge/path:fuga/path","piyo/path:foo/path"].
-int mount_host_path(vector<string> mount_paths, string rootfs_path){
+int mount_host_path(vector<string> mount_paths, std::filesystem::path rootfs_path){
   using std::vector;
   using std::string;
   for (string mount_path : mount_paths) {

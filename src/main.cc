@@ -178,6 +178,7 @@ int create_container(void * arg){
   }
 
   if(ca->command_arg.bind){
+    printf("command_arg.rootfs_path.generic_string(): %s\n",std::filesystem::absolute(ca->command_arg.rootfs_path).c_str());
     rc = mount_host_path(ca->command_arg.bind_paths, ca->command_arg.rootfs_path);
     if(rc < 0){
       return(rc);
