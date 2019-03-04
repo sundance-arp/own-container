@@ -56,7 +56,7 @@ int trace_container_systemcall(int pid,char *container_name){
       break;
     }
     ptrace(PTRACE_GETREGS, pid, NULL, &regs);
-    if (regs.rax == - ENOSYS) {
+    if (regs.rax == - (long long unsigned int)ENOSYS) {
       continue;
     }
     time_t now_time = time(NULL);
@@ -215,6 +215,7 @@ int create_container(void * arg){
     printf("exec Error: %d\n", rc);
     return(-1);
   }
+  return 0;
 }
 
 
