@@ -3,9 +3,11 @@ project_dir=$(cd $(dirname $0); pwd)
 src_dir="${project_dir}/src"
 
 flag="-std=c++17 -lstdc++fs -Wall"
+set +u
 if [ "${1}" = "--debug" ]; then
   flag="${flag} -g"
 fi
+set -u
 
 files="main.cc mount.cc namespace.cc utils.c cgroups.c ptrace.c commandargument.cc"
 
