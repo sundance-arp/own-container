@@ -52,7 +52,6 @@ int trace_container_systemcall(int pid,char *container_name){
     ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
     waitpid(pid,&status,WUNTRACED);
     if(WIFEXITED(status)){
-      printf("exit status = %d\n",WEXITSTATUS(status));
       break;
     }
     ptrace(PTRACE_GETREGS, pid, NULL, &regs);
@@ -72,7 +71,7 @@ int trace_container_systemcall(int pid,char *container_name){
 int wait_container_process(int pid,char *container_name, command_argument command_arg){
   int status;
   if(command_arg.trace){
-    trace_container_systemcall(pid, container_name);
+    status = trace_container_systemcall(pid, container_name);
   }else {
     waitpid(pid,&status,WUNTRACED);
   }
@@ -178,7 +177,6 @@ int create_container(void * arg){
   }
 
   if(ca->command_arg.bind){
-    printf("command_arg.rootfs_path.generic_string(): %s\n",std::filesystem::absolute(ca->command_arg.rootfs_path).c_str());
     rc = mount_host_path(ca->command_arg.bind_paths, ca->command_arg.rootfs_path);
     if(rc < 0){
       return(rc);
@@ -282,6 +280,6 @@ int main(int argc, char *argv[])
   close(ca.pipe_fd[1]);
 
   wait_container_process(child_pid,container_name, command_arg);
-  return 0;
+  return rc;
 }
 
