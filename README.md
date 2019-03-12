@@ -1,7 +1,9 @@
 # Own Container
 Original container runtime.
 
-Make ideal environment.
+Own Container is simple container runtime.
+
+It can use User-Namespace.
 
 I would appreciate it if you would help improve.
 
@@ -10,7 +12,6 @@ Repository name may change.
 
 ## TODO
 Immediate:
-- Volume mount <- doing now
 - User specification
 
 More:
