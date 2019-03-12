@@ -98,7 +98,7 @@ int mount_host_to_container(std::filesystem::path host_path, std::filesystem::pa
   }
 
   if (!std::filesystem::exists(rootfs_path)){
-    printf("rootfs path invalid Error%d\n",-1);
+    printf("rootfs path invalid Error: %d\n",-1);
     printf("rootfs is not exist.\n");
     return -1;
   }
@@ -119,7 +119,7 @@ int mount_host_to_container(std::filesystem::path host_path, std::filesystem::pa
 
   // exist check
   if(!std::filesystem::exists(host_path)){
-    printf("host path not found Error%d\n",-1);
+    printf("host path not found Error: %d\n",-1);
     return -1;
   }
 
