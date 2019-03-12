@@ -29,5 +29,10 @@ More:
 ./get-alpine.sh
 # spawn container. Arbitrary rootfs can be specified as an argument.
 ./bin/container ./alpine-root/
+
 ```
+Options:
+* [-t] trace systemcall
+* [-P] execute privilege container
+* [-b <host-absolute-path>:<container-absolute-path>] mount host path into container
 

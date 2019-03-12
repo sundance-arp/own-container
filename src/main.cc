@@ -133,6 +133,7 @@ command_argument parse_argument(int argc, char* argv[])
           printf("Usage:\n");
           printf("* [-t] trace systemcall\n");
           printf("* [-P] execute privilege container\n");
+          printf("* [-b <host-absolute-path>:<container-absolute-path>] mount host path into container\n");
           exit(1);
         }
     }
