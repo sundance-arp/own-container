@@ -31,8 +31,11 @@ More:
 ./bin/container ./alpine-root/
 
 ```
-Options:
+
+Options
+```
 * [-t] trace systemcall
 * [-P] execute privilege container
 * [-b <host-absolute-path>:<container-absolute-path>] mount host path into container
+```
 
